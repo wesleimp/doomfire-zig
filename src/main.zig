@@ -95,9 +95,12 @@ const FireState = struct {
         for (0..self.height) |row| {
             for (0..self.width) |column| {
                 const pixel: u16 = @intCast(column + (self.width * row));
-                const pixel_intensity = self.fire_pixels[pixel];
+                const pixel_bottom: u16 = @intCast(column + (self.width * (row + 1)));
 
-                try self.writer.print("\x1b[38;5;{d}m██\x1b[0m", .{palette[pixel_intensity]});
+                const pixel_intensity = self.fire_pixels[pixel];
+                const pixel_bottom_intensity = if (pixel_bottom < self.number_of_pixels) self.fire_pixels[pixel_bottom] else 0;
+
+                try self.writer.print("\x1b[38;5;{d}m\x1b[48;5;{d}m▄\x1b[0m", .{ palette[pixel_bottom_intensity], palette[pixel_intensity] });
             }
             try self.writer.print("\n", .{});
         }
@@ -152,7 +155,7 @@ pub fn main(init: std.process.Init) !void {
     const stdout = &stdout_writer.interface;
     defer stdout.flush() catch {};
 
-    var fire: FireState = try .init(alloc, io, stdout, 30, 60);
+    var fire: FireState = try .init(alloc, io, stdout, 30, 70);
     defer fire.deinit(alloc);
 
     try stdout.print("{s}", .{enter_altscreen});
